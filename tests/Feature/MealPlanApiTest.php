@@ -247,8 +247,7 @@ class MealPlanApiTest extends TestCase
 
         $this->actingAs($coach)
             ->deleteJson("/api/meal-plans/{$plan->id}")
-            ->assertOk()
-            ->assertJsonFragment(['message' => 'Meal plan deleted.']);
+            ->assertNoContent();
 
         $this->assertDatabaseMissing('meal_plans', ['id' => $plan->id]);
         $this->assertDatabaseMissing('meal_plan_days', ['meal_plan_id' => $plan->id]);

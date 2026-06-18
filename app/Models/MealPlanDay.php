@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MealPlanDay extends Model
 {
@@ -11,12 +15,12 @@ class MealPlanDay extends Model
         'day_number',
     ];
 
-    public function mealPlan()
+    public function mealPlan(): BelongsTo
     {
         return $this->belongsTo(MealPlan::class);
     }
 
-    public function meals()
+    public function meals(): HasMany
     {
         return $this->hasMany(Meal::class);
     }

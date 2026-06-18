@@ -1,26 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\MealPlanAccessDeniedException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreMealPlanRequest;
 use App\Http\Requests\UpdateMealPlanRequest;
+use App\Http\Resources\MealPlanResource;
 use App\Models\MealPlan;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class MealPlanController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $plans = MealPlan::where('coach_id', $request->user()->id)
             ->latest()
             ->get();
 
-        return response()->json(['data' => $plans]);
+        return MealPlanResource::collection($plans);
     }
 
-    public function store(StoreMealPlanRequest $request)
+    public function store(StoreMealPlanRequest $request): JsonResponse
     {
         $validated = $request->validated();
 
@@ -58,39 +65,59 @@ class MealPlanController extends Controller
             return $mealPlan;
         });
 
-        $mealPlan->load('days.meals.ingredients');
-
-        return response()->json($mealPlan, 201);
-    }
-
-    public function show(Request $request, MealPlan $mealPlan)
-    {
-        $this->authoriseMealPlan($mealPlan, $request);
+        Log::info('meal_plan.created', [
+            'meal_plan_id' => $mealPlan->id,
+            'coach_id'     => $request->user()->id,
+        ]);
 
         $mealPlan->load('days.meals.ingredients');
 
-        return response()->json($mealPlan);
+        return MealPlanResource::make($mealPlan)->response()->setStatusCode(201);
     }
 
-    public function update(UpdateMealPlanRequest $request, MealPlan $mealPlan)
+    public function show(Request $request, MealPlan $mealPlan): JsonResponse
     {
         $this->authoriseMealPlan($mealPlan, $request);
 
-        $mealPlan->update($request->validated());
+        $mealPlan->load('days.meals.ingredients');
 
-        return response()->json($mealPlan);
+        return MealPlanResource::make($mealPlan)->response();
     }
 
-    public function destroy(Request $request, MealPlan $mealPlan)
+    public function update(UpdateMealPlanRequest $request, MealPlan $mealPlan): JsonResponse
     {
-        $this->authoriseMealPlan($mealPlan, $request);
+        $updated = DB::transaction(function () use ($request, $mealPlan) {
+            $plan = MealPlan::lockForUpdate()->findOrFail($mealPlan->id);
+            $this->authoriseMealPlan($plan, $request);
+            $plan->update($request->validated());
+            return $plan;
+        });
 
-        $mealPlan->delete();
+        Log::info('meal_plan.updated', [
+            'meal_plan_id' => $updated->id,
+            'coach_id'     => $request->user()->id,
+        ]);
 
-        return response()->json(['message' => 'Meal plan deleted.']);
+        return MealPlanResource::make($updated)->response();
     }
 
-    public function shoppingList(Request $request, MealPlan $mealPlan)
+    public function destroy(Request $request, MealPlan $mealPlan): JsonResponse
+    {
+        DB::transaction(function () use ($request, $mealPlan) {
+            $plan = MealPlan::lockForUpdate()->findOrFail($mealPlan->id);
+            $this->authoriseMealPlan($plan, $request);
+            $plan->delete();
+        });
+
+        Log::info('meal_plan.deleted', [
+            'meal_plan_id' => $mealPlan->id,
+            'coach_id'     => $request->user()->id,
+        ]);
+
+        return response()->json(null, 204);
+    }
+
+    public function shoppingList(Request $request, MealPlan $mealPlan): JsonResponse
     {
         $this->authoriseMealPlan($mealPlan, $request);
 
@@ -113,9 +140,13 @@ class MealPlanController extends Controller
         return response()->json(['items' => $items]);
     }
 
-    public function nutritionSummary(Request $request, MealPlan $mealPlan)
+    public function nutritionSummary(Request $request, MealPlan $mealPlan): JsonResponse
     {
         $this->authoriseMealPlan($mealPlan, $request);
+
+        $protein = config('meal_plans.kcal_per_gram.protein');
+        $carbs   = config('meal_plans.kcal_per_gram.carbs');
+        $fat     = config('meal_plans.kcal_per_gram.fat');
 
         $days = DB::table('meal_plan_days')
             ->leftJoin('meals', 'meal_plan_days.id', '=', 'meals.meal_plan_day_id')
@@ -125,12 +156,12 @@ class MealPlanController extends Controller
             ->selectRaw('COALESCE(SUM(meal_ingredients.protein_g), 0) as total_protein_g')
             ->selectRaw('COALESCE(SUM(meal_ingredients.carbs_g), 0) as total_carbs_g')
             ->selectRaw('COALESCE(SUM(meal_ingredients.fat_g), 0) as total_fat_g')
-            ->selectRaw('
-                COALESCE(SUM(meal_ingredients.protein_g), 0) * 4
-                + COALESCE(SUM(meal_ingredients.carbs_g), 0) * 4
-                + COALESCE(SUM(meal_ingredients.fat_g), 0) * 9
+            ->selectRaw("
+                COALESCE(SUM(meal_ingredients.protein_g), 0) * {$protein}
+                + COALESCE(SUM(meal_ingredients.carbs_g), 0) * {$carbs}
+                + COALESCE(SUM(meal_ingredients.fat_g), 0) * {$fat}
                 as total_calories
-            ')
+            ")
             ->groupBy('meal_plan_days.day_number')
             ->orderBy('meal_plan_days.day_number')
             ->get()
@@ -148,7 +179,7 @@ class MealPlanController extends Controller
     private function authoriseMealPlan(MealPlan $mealPlan, Request $request): void
     {
         if ($mealPlan->coach_id !== $request->user()->id) {
-            abort(403);
+            throw new MealPlanAccessDeniedException();
         }
     }
 }

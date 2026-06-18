@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -17,8 +19,10 @@ class UpdateMealPlanRequest extends FormRequest
      */
     public function rules(): array
     {
+        $maxName = config('meal_plans.max_name_length');
+
         return [
-            'name'        => ['sometimes', 'required', 'string', 'max:120'],
+            'name'        => ['sometimes', 'required', 'string', "max:{$maxName}"],
             'description' => ['nullable', 'string'],
         ];
     }
