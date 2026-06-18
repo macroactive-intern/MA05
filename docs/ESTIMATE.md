@@ -274,15 +274,26 @@ Step 15
 ## AI Estimate
 
 Step	                                  |  My estimate	       |         AI estimate
+
+
 Step 1 — Project setup	                  |     10 mins	           |         15 mins
-Step 2 — Documentation	                  |     120 mins           | 	    90–120 mins
+
+Step 2 — Documentation	                  |     120 mins           | 	     90–120 mins
+
 Step 3 — Finish setup / Sanctum / Pest	  |     20 mins	           |         25 mins
+
 Step 4 — Database migrations	          |     30 mins	           |         35–45 mins
+
 Step 5 — Models	                          |     30 mins	           |         25–35 mins
+
 Step 6 — Form Requests	                  |     35 mins	           |         45–60 mins
+
 Step 7 — Controller and routes	          |     30 mins	           |         30–40 mins
+
 Step 8 — Implement endpoints	          |     45 mins	           |         75–90 mins
+
 Step 9 — Tests	                          |     120 mins	       |         150–180 mins
+
 Step 10 — BEFORE-AFTER.md	              |     20 mins	           |         20–30 mins
 
 AI total estimate
