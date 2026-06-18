@@ -104,7 +104,11 @@ class MealPlanController extends Controller
             ->groupByRaw('LOWER(meal_ingredients.ingredient_name)')
             ->groupBy('meal_ingredients.unit')
             ->orderBy('ingredient_name')
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                $item->quantity = number_format((float) $item->quantity, 2, '.', '');
+                return $item;
+            });
 
         return response()->json(['items' => $items]);
     }
@@ -129,7 +133,14 @@ class MealPlanController extends Controller
             ')
             ->groupBy('meal_plan_days.day_number')
             ->orderBy('meal_plan_days.day_number')
-            ->get();
+            ->get()
+            ->map(function ($day) {
+                $day->total_protein_g = number_format((float) $day->total_protein_g, 2, '.', '');
+                $day->total_carbs_g   = number_format((float) $day->total_carbs_g,   2, '.', '');
+                $day->total_fat_g     = number_format((float) $day->total_fat_g,     2, '.', '');
+                $day->total_calories  = number_format((float) $day->total_calories,  2, '.', '');
+                return $day;
+            });
 
         return response()->json(['days' => $days]);
     }
