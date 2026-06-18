@@ -1,3 +1,5 @@
+Before
+
  PASS  Tests\Unit\ExampleTest
   ✓ that true is true
 
@@ -119,4 +121,37 @@ Failed asserting that false is true.
   Tests:    4 failed, 20 passed (80 assertions)
   Duration: 0.67s
 
-  
+After
+
+   PASS  Tests\Unit\ExampleTest
+  ✓ that true is true
+
+   PASS  Tests\Feature\ExampleTest
+  ✓ the application returns a successful response                                                                                                      0.14s  
+
+   PASS  Tests\Feature\MealPlanApiTest
+  ✓ guest cannot access meal plan endpoints                                                                                                            0.08s  
+  ✓ authenticated coach can access index                                                                                                               0.03s  
+  ✓ coach can create meal plan with nested records                                                                                                     0.02s  
+  ✓ store returns nested plan in response                                                                                                              0.01s  
+  ✓ duplicate day number returns 422                                                                                                                   0.01s  
+  ✓ zero quantity returns 422                                                                                                                          0.01s  
+  ✓ negative quantity returns 422                                                                                                                      0.01s  
+  ✓ owner can see full nested plan                                                                                                                     0.01s  
+  ✓ owner can update plan metadata                                                                                                                     0.01s  
+  ✓ owner can delete plan and nested records are removed                                                                                               0.01s  
+  ✓ coach b accessing coach a plan returns 403 on show                                                                                                 0.01s  
+  ✓ coach b cannot update coach a plan                                                                                                                 0.01s  
+  ✓ coach b cannot delete coach a plan                                                                                                                 0.01s  
+  ✓ coach b cannot access coach a shopping list                                                                                                        0.01s  
+  ✓ coach b cannot access coach a nutrition summary                                                                                                    0.01s  
+  ✓ nonexistent plan returns 404                                                                                                                       0.01s  
+  ✓ shopping list combines same name and unit                                                                                                          0.01s  
+  ✓ shopping list combines different case ingredient names                                                                                             0.01s  
+  ✓ shopping list keeps same name different unit separate                                                                                              0.01s  
+  ✓ nutrition summary calculates calories correctly                                                                                                    0.01s  
+  ✓ nutrition summary treats null macros as zero                                                                                                       0.01s  
+  ✓ nutrition summary groups by day                                                                                                                    0.01s  
+
+  Tests:    24 passed (88 assertions)
+  Duration: 0.67s
